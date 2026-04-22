@@ -1,0 +1,23 @@
+# Core data processing
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+
+# Deep learning
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.35.0
+timm>=0.9.0
+
+# Gradient boosting
+xgboost>=2.0.0
+
+# Data collection pipeline
+playwright>=1.40.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# Visualization and reporting
+matplotlib>=3.7.0
+seaborn>=0.12.0
+tqdm>=4.65.0

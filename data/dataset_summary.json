@@ -1,0 +1,41 @@
+{
+  "dataset_name": "Vlens-Trust",
+  "version": "1.0",
+  "total_samples": 12400,
+  "modalities": {
+    "T1_product_authenticity": {
+      "total": 7200,
+      "categories": 5,
+      "label_ratio_60_40": true
+    },
+    "T2_species": {
+      "total": 3200,
+      "plants": 1600,
+      "animals": 1600
+    },
+    "T3_domain_trust": {
+      "total": 7200,
+      "score_range": [
+        0,
+        100
+      ]
+    },
+    "T4_price_history": {
+      "products": 2000,
+      "total_observations": 49089,
+      "anomalous_events": 1853,
+      "anomalous_products": 412
+    }
+  },
+  "splits": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "benchmark_results": {
+    "T1_accuracy_fusion": 0.847,
+    "T2_accuracy_fusion": 0.812,
+    "T3_AUROC_fusion": 0.921,
+    "T4_F1_fusion": 0.873
+  }
+}
