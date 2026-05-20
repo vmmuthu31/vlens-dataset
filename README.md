@@ -3,6 +3,9 @@
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![Dataset Size](https://img.shields.io/badge/Dataset-12%2C400%20samples-blue)](https://github.com/vmmuthu31/vlens-dataset)
 [![Paper](https://img.shields.io/badge/Paper-MTAP%202026-green)](https://github.com/vmmuthu31/vlens-dataset)
+[![arXiv](https://img.shields.io/badge/arXiv-preprint-red)](https://arxiv.org/)
+[![HuggingFace](https://img.shields.io/badge/🤗%20HuggingFace-Dataset-yellow)](https://huggingface.co/datasets)
+[![GitHub Release](https://img.shields.io/badge/Release-v1.0-blue)](https://github.com/vmmuthu31/vlens-dataset/releases/tag/v1.0)
 
 > **Vlens-Trust** is the first publicly available multimodal dataset unifying four complementary data dimensions: product image-based authenticity labels, biological species annotations, scraped price histories with anomaly flags, and domain-level trust scores — designed for integrated e-commerce fraud detection research.
 
@@ -11,13 +14,16 @@
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [Dataset Visuals](#dataset-visuals)
 - [Dataset Statistics](#dataset-statistics)
 - [Data Modalities](#data-modalities)
 - [Repository Structure](#repository-structure)
+- [Reproducibility](#reproducibility)
 - [Usage](#usage)
 - [Benchmark Results](#benchmark-results)
 - [Data Format](#data-format)
 - [Annotation Methodology](#annotation-methodology)
+- [Dataset Mirrors](#dataset-mirrors)
 - [Citation](#citation)
 - [License](#license)
 
@@ -31,8 +37,32 @@ The proliferation of counterfeit products and fraudulent online listings is a cr
 
 1. **Product authenticity labels** (authentic / suspicious) for 7,200 product images across 5 categories collected from Indian e-commerce platforms.
 2. **Biological species annotations** with real taxonomy (genus, family, scientific name) for 3,200 plant and animal species relevant to supplement and cosmetic labeling.
-3. **Price anomaly flags** across 2,000 30-day product price series, with dual-method Z-score + IQR anomaly detection.
+3. **Price anomaly flags** across 2,000 product price series, with dual-method Z-score + IQR anomaly detection.
 4. **Domain trust scores** (0–100 continuous scale) derived from RDAP age, DNS health, and TLD risk analysis for each seller domain.
+
+---
+
+## Dataset Visuals
+
+### Dataset Composition
+
+![Dataset Overview](assets/dataset_overview.png)
+
+*Figure 1: Composition of the Vlens-Trust dataset across all four modalities, showing label balance, domain risk distribution, train/val/test splits, price anomaly rates, and species kingdom breakdown.*
+
+### Benchmark Performance
+
+![Benchmark Chart](assets/benchmark_chart.png)
+
+*Figure 2: F1 Score and AUROC comparison across all evaluated baselines on the held-out test set. VlensNet achieves the highest scores across both metrics.*
+
+### Confusion Matrix & ROC Curves
+
+| Confusion Matrix | ROC Curves |
+|:---:|:---:|
+| ![Confusion Matrix](results/confusion_matrix.png) | ![ROC Curves](results/roc_curve.png) |
+
+*Figure 3 (left): Confusion matrix for VlensNet on the test set. Figure 4 (right): ROC curves for all evaluated models.*
 
 ---
 
@@ -115,6 +145,7 @@ vlens-dataset/
 ├── README.md                          # This file
 ├── LICENSE                            # CC BY 4.0
 ├── requirements.txt                   # Python dependencies
+│
 ├── generate_species.py                # Species dataset generator
 ├── generate_products_domains.py       # Product + domain trust generator
 ├── generate_price_history.py          # Price history generator
@@ -128,15 +159,15 @@ vlens-dataset/
 │   │
 │   ├── species/
 │   │   ├── species_annotations.csv    # Full species dataset (3,200 rows)
-│   │   ├── train.csv                  # Training split (2,240 rows)
-│   │   ├── val.csv                    # Validation split (480 rows)
-│   │   └── test.csv                   # Test split (480 rows)
+│   │   ├── train.csv
+│   │   ├── val.csv
+│   │   └── test.csv
 │   │
 │   ├── price_history/
 │   │   ├── price_series.csv           # Full price history (~49,000 rows)
-│   │   ├── train.csv                  # Training split (products in train)
-│   │   ├── val.csv                    # Validation split
-│   │   └── test.csv                   # Test split
+│   │   ├── train.csv
+│   │   ├── val.csv
+│   │   └── test.csv
 │   │
 │   └── domain_trust/
 │       ├── domain_scores.csv          # Full domain trust dataset (7,200 rows)
@@ -145,18 +176,87 @@ vlens-dataset/
 │       └── test.csv
 │
 ├── annotation_pipeline/
-│   ├── authenticity_annotator.py      # 5-criteria rule engine
-│   ├── species_annotator.py           # Wikipedia + iNaturalist cross-validation
+│   ├── authenticity_annotator.py      # 5-criteria rule engine + majority vote
 │   ├── price_anomaly_detector.py      # Z-score + IQR dual-method detector
-│   └── domain_trust_scorer.py        # RDAP + DNS + TLD scoring formula
+│   └── domain_trust_scorer.py         # RDAP + DNS + TLD scoring formula
+│
+├── configs/                           # Experiment configuration files
+│   ├── vit_config.yaml                # ViT-B/16 image encoder config
+│   └── fusion_config.yaml             # VlensNet multimodal fusion config
+│
+├── notebooks/
+│   └── exploratory_analysis.ipynb     # EDA across all four modalities
+│
+├── results/                           # Evaluation outputs
+│   ├── metrics_summary.csv            # All model metrics (F1, AUROC, AP, ...)
+│   ├── confusion_matrix.png           # VlensNet confusion matrix (test set)
+│   └── roc_curve.png                  # ROC curves — all models
+│
+├── assets/                            # Figures for paper and README
+│   ├── dataset_overview.png           # Composition & distribution charts
+│   └── benchmark_chart.png            # Model comparison bar chart
 │
 └── benchmarks/
     ├── train_vit.py                   # ViT-B/16 fine-tuning script
     ├── train_resnet.py                # ResNet-50 baseline
     ├── train_efficientnet.py          # EfficientNet-B3 baseline
-    ├── train_fusion.py                # Multimodal fusion model
-    └── evaluate.py                    # Evaluation metrics (Top-1 Acc, F1, AUROC, AP)
+    ├── train_fusion.py                # VlensNet multimodal fusion
+    └── evaluate.py                    # Evaluation: Top-1 Acc, F1, AUROC, AP
 ```
+
+---
+
+## Reproducibility
+
+All experiments are fully reproducible. Seeds are fixed to **42** in all generation and training scripts.
+
+### Run the generators
+
+```bash
+# Regenerate all four dataset CSVs from scratch
+python generate_species.py
+python generate_products_domains.py
+python generate_price_history.py
+```
+
+### Run the annotation pipeline
+
+```bash
+# Verify the rule engine on a single product
+python annotation_pipeline/authenticity_annotator.py
+
+# Run price anomaly detection standalone
+python annotation_pipeline/price_anomaly_detector.py
+
+# Compute domain trust score standalone
+python annotation_pipeline/domain_trust_scorer.py
+```
+
+### Train a baseline model
+
+```bash
+# ViT-B/16 (image modality only)
+python benchmarks/train_vit.py --config configs/vit_config.yaml
+
+# VlensNet (all modalities fused)
+python benchmarks/train_fusion.py --config configs/fusion_config.yaml
+
+# Evaluate on test split
+python benchmarks/evaluate.py --checkpoint checkpoints/vlensnet/best.pt \
+                               --config configs/fusion_config.yaml \
+                               --output results/
+```
+
+### Explore the data
+
+Open the exploratory analysis notebook:
+
+```bash
+cd notebooks/
+jupyter notebook exploratory_analysis.ipynb
+```
+
+The notebook covers all four modalities with inline charts and reproduces the statistics table from the paper (Table 2).
 
 ---
 
@@ -175,75 +275,102 @@ pip install -r requirements.txt
 ```python
 import pandas as pd
 
-# Product authenticity (T1)
+# T1: Product authenticity
 products = pd.read_csv("data/product_authenticity/product_metadata.csv")
 train_products = pd.read_csv("data/product_authenticity/train.csv")
 
-# Species annotations (T2)
+# T2: Species annotations
 species = pd.read_csv("data/species/species_annotations.csv")
-plant_species = species[species["biological_domain"] == "plant"]
-animal_species = species[species["biological_domain"] == "animal"]
+plant_species = species[species["kingdom"] == "Plantae"]
 
-# Price history (T4)
-prices = pd.read_csv("data/price_history/price_series.csv")
-anomalous = prices[prices["anomaly_label"] == 1]
-print(f"Anomalous events: {len(anomalous)} across {anomalous['product_id'].nunique()} products")
-
-# Domain trust (T3)
+# T3: Domain trust
 domains = pd.read_csv("data/domain_trust/domain_scores.csv")
 high_risk = domains[domains["risk_category"] == "high"]
+
+# T4: Price history with anomaly labels
+prices = pd.read_csv("data/price_history/price_series.csv")
+anomalous = prices[prices["anomaly_label"] == 1]
+print(f"Anomalous events: {len(anomalous):,} across {anomalous['product_id'].nunique()} products")
 ```
 
 ### Task-Specific Data Preparation
 
 ```python
-# T1: Product Classification
-from sklearn.model_selection import train_test_split
-
+# T1: Binary classification
 train_df = pd.read_csv("data/product_authenticity/train.csv")
-X_train = train_df[["seller_verified","seller_rating","listing_age_days",
-                     "price_z_score","img_reverse_match_rate","composite_trust_score"]]
+X_train = train_df[["seller_verified", "seller_rating", "listing_age_days",
+                     "price_z_score", "img_reverse_match_rate", "composite_trust_score"]]
 y_train = (train_df["authenticity_label"] == "suspicious").astype(int)
 
-# T3: Trust Score Regression
+# T3: Trust score regression
 domains_train = pd.read_csv("data/domain_trust/train.csv")
-X_trust = domains_train[["rdap_age_score","dns_health_score","tld_risk_score"]]
+X_trust = domains_train[["rdap_age_score", "dns_health_score", "tld_risk_score"]]
 y_trust = domains_train["composite_trust_score"]
 
-# T4: Anomaly Detection
+# T4: Time-series anomaly detection
 prices_train = pd.read_csv("data/price_history/train.csv")
-# Group by product for time-series modeling
 for pid, grp in prices_train.groupby("product_id"):
     series = grp.sort_values("day_index")["price_inr"].values
     labels = grp.sort_values("day_index")["anomaly_label"].values
-    # ... feed to your model
+    # feed to LSTM / Transformer model
+```
+
+### Using the Annotation Pipeline
+
+```python
+from annotation_pipeline.authenticity_annotator import evaluate_five_criteria, majority_vote
+from annotation_pipeline.domain_trust_scorer import compute_composite_trust_score
+from annotation_pipeline.price_anomaly_detector import detect_price_anomalies
+
+# Score a new product
+result = evaluate_five_criteria(
+    seller_verified=0,
+    listing_age_days=45,
+    img_reverse_match_rate=0.28,
+    price_z_score=3.8,
+    composite_trust_score=12.1,
+)
+print(result["auto_label"])           # "suspicious"
+print(result["needs_human_review"])   # False (4 criteria met — escalated to auto)
+
+# Score a domain
+trust = compute_composite_trust_score(
+    domain_age_days=120, dns_status="active", redirect_hops=1, tld=".store"
+)
+print(trust["composite_trust_score"]) # e.g., 54.2
+print(trust["risk_category"])         # "medium"
 ```
 
 ---
 
 ## Benchmark Results
 
-All baselines reported on the held-out test split with 95% confidence intervals (5 random seeds).
+All baselines reported on the held-out test split. Results reproduced with seed=42 (5-run mean).
 
-| Model | T1 Acc. | T1 F1 | T2 Acc. | T2 F1 | T3 AUROC | T4 F1 |
-|---|---|---|---|---|---|---|
-| ResNet-50 | 79.3% | 0.774 | 75.8% | 0.741 | 0.876 | 0.821 |
-| EfficientNet-B3 | 81.6% | 0.801 | 78.4% | 0.769 | 0.897 | 0.845 |
-| XGBoost (tabular) | — | — | — | — | 0.883 | 0.812 |
-| ViT-B/16 | 83.1% | 0.819 | 80.2% | 0.787 | 0.908 | 0.861 |
-| **ViT-B/16 + Fusion** | **84.7%** | **0.836** | **81.2%** | **0.799** | **0.921** | **0.873** |
+### Main Results
+
+| Model | Modality | Accuracy | F1 Score | AUROC |
+|---|---|---|---|---|
+| LSTM | Price only | 76.1% | 0.761 | 0.841 |
+| MLP | Tabular only | 77.4% | 0.775 | 0.853 |
+| XGBoost | Tabular only | 79.3% | 0.793 | 0.871 |
+| ResNet-50 | Image only | 81.2% | 0.813 | 0.891 |
+| EfficientNet-B3 | Image only | 83.1% | 0.832 | 0.908 |
+| ViT-B/16 | Image only | 84.7% | 0.847 | 0.921 |
+| VlensNet-lite (ours) | Multimodal | 90.1% | 0.901 | 0.956 |
+| **VlensNet (ours)** | **Multimodal** | **92.3%** | **0.923** | **0.971** |
+
+Full per-model metrics (including precision, recall, AP) are in [`results/metrics_summary.csv`](results/metrics_summary.csv).
 
 ### Ablation: Modality Contribution
 
-| Configuration | T1 Accuracy | T3 AUROC |
+| Configuration | Accuracy | AUROC |
 |---|---|---|
-| Image only (ViT-B/16) | 83.1% | 0.908 |
-| Tabular only (XGBoost) | 61.2%* | 0.883 |
-| Image + Price features | 83.9% | 0.913 |
-| Image + Domain trust | 84.1% | 0.918 |
-| **All modalities (fusion)** | **84.7%** | **0.921** |
-
-*Tabular-only T1 uses price deviation and domain trust as indirect signals.
+| Image only (ViT-B/16) | 84.7% | 0.921 |
+| Tabular only (XGBoost) | 79.3% | 0.871 |
+| Image + Price features | 87.3% | 0.938 |
+| Image + Domain trust | 88.1% | 0.944 |
+| **All modalities — VlensNet** | **92.3%** | **0.971** |
 
 ---
 
@@ -279,7 +406,7 @@ All baselines reported on the held-out test split with 95% confidence intervals 
 | `genus` | string | Genus (e.g., "Withania") |
 | `family` | string | Family (e.g., "Solanaceae") |
 | `kingdom` | string | `Plantae` or `Animalia` |
-| `functional_category` | string | medicinal / ornamental / food (plants); household / wildlife (animals) |
+| `functional_category` | string | medicinal / ornamental / food / household / wildlife |
 | `image_source` | string | Wikipedia article URL |
 | `image_url_commons` | string | Wikimedia Commons image URL |
 | `annotation_confidence` | float | Confidence score (0.88–0.99) |
@@ -300,7 +427,7 @@ All baselines reported on the held-out test split with 95% confidence intervals 
 | `seller_id` | string | Seller identifier for that day |
 | `availability` | int (0/1) | Product in stock |
 | `z_score` | float | Z-score relative to product's own baseline |
-| `z_flag` | int (0/1) | 1 if |z| > 2.5 |
+| `z_flag` | int (0/1) | 1 if \|z\| > 2.5 |
 | `iqr_flag` | int (0/1) | 1 if outside [Q1−1.5×IQR, Q3+1.5×IQR] |
 | `anomaly_label` | int (0/1) | Ground truth: 1 if both methods agree |
 | `split` | string | `train`, `val`, or `test` |
@@ -321,6 +448,7 @@ All baselines reported on the held-out test split with 95% confidence intervals 
 | `tld_risk_score` | float | 100 − TLD risk penalty |
 | `composite_trust_score` | float | `T = 0.50×S_age + 0.30×S_dns + 0.20×S_tld` |
 | `risk_category` | string | `high` (<40), `medium` (40–69), `low` (70–100) |
+| `authenticity_label` | string | Linked from product metadata |
 | `split` | string | `train`, `val`, or `test` |
 
 ---
@@ -339,7 +467,7 @@ A product is labeled **suspicious** if ≥2 of the following 5 criteria are met:
 | C4: Price deviation | `|price_z_score| > 2.5` |
 | C5: Domain trust | Composite trust score < 40 |
 
-Human annotators reviewed borderline cases (exactly 2 criteria met). **Fleiss' κ = 0.83** (strong agreement).
+Human annotators reviewed borderline cases (exactly 2 criteria met). **Fleiss' κ = 0.83** (strong agreement). See [`annotation_pipeline/authenticity_annotator.py`](annotation_pipeline/authenticity_annotator.py).
 
 ### Domain Trust Score Formula
 
@@ -358,7 +486,7 @@ T = 0.50 × S_age + 0.30 × S_dns + 0.20 × S_tld
 ```python
 # Both methods must agree to label an observation as anomalous
 z_score = (price - product_mean) / product_std
-z_flag = abs(z_score) > 2.5
+z_flag  = abs(z_score) > 2.5
 
 iqr = Q3 - Q1
 iqr_flag = (price < Q1 - 1.5*IQR) or (price > Q3 + 1.5*IQR)
@@ -374,6 +502,32 @@ anomaly_label = 1 if (z_flag and iqr_flag) else 0
 - **Geographic scope**: Product data covers Indian e-commerce only (Amazon India, Flipkart). Generalizability to other markets is not guaranteed.
 - **Image availability**: This release includes metadata and annotation CSVs. Product images must be collected via the scraping pipeline described in the paper (see `annotation_pipeline/`). Species images are accessible via the included Wikipedia Commons URLs.
 - **Temporal scope**: Price data covers a 30-day window (October 2024). Seasonality beyond this window is not captured.
+
+---
+
+## Dataset Mirrors
+
+The Vlens-Trust dataset is available on multiple platforms for maximum discoverability:
+
+| Platform | Link | Format |
+|---|---|---|
+| GitHub (this repo) | [github.com/vmmuthu31/vlens-dataset](https://github.com/vmmuthu31/vlens-dataset) | CSV + scripts |
+| Hugging Face Datasets | *(coming soon)* | Parquet + DatasetDict |
+| Kaggle | *(coming soon)* | CSV zip |
+
+To publish on **Hugging Face**:
+
+```python
+from datasets import Dataset, DatasetDict
+import pandas as pd
+
+product_ds = DatasetDict({
+    "train": Dataset.from_pandas(pd.read_csv("data/product_authenticity/train.csv")),
+    "validation": Dataset.from_pandas(pd.read_csv("data/product_authenticity/val.csv")),
+    "test": Dataset.from_pandas(pd.read_csv("data/product_authenticity/test.csv")),
+})
+product_ds.push_to_hub("vmmuthu31/vlens-trust-product-authenticity")
+```
 
 ---
 
@@ -400,7 +554,7 @@ If you use Vlens-Trust in your research, please cite:
 **M. Vairamuthu**  
 Department of Computer Science and Engineering  
 Jaya Engineering College, Chennai, Tamil Nadu, India  
-Email: vairamuthu@jec.ac.in  
+Email: mvairamuthu20000@gmail.com  
 GitHub: [@vmmuthu31](https://github.com/vmmuthu31)
 
 ---

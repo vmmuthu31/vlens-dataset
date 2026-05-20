@@ -1,0 +1,135 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Vlens-Trust: VlensNet Multimodal Fusion Configuration
+# Paper Section 5.3 — Multimodal Product Authenticity Detection
+# Architecture: ViT-B/16 (image) ⊕ Transformer (price) ⊕ MLP (tabular) → cross-attention fusion
+# ─────────────────────────────────────────────────────────────────────────────
+
+model:
+  name: VlensNet
+  version: "1.0"
+  num_classes: 2                        # 0=authentic, 1=suspicious
+
+  # ── Image Branch ────────────────────────────────────────────────────────────
+  image_encoder:
+    backbone: vit_base_patch16_224
+    pretrained: true
+    pretrained_source: imagenet21k
+    output_dim: 768
+    freeze_layers: 8                    # freeze first 8 of 12 transformer blocks
+
+  # ── Price-series Branch (Transformer) ───────────────────────────────────────
+  price_encoder:
+    type: Transformer
+    input_dim: 4                        # [price_inr, z_score, z_flag, discount_pct]
+    d_model: 128
+    nhead: 4
+    num_encoder_layers: 3
+    dim_feedforward: 256
+    dropout: 0.1
+    max_seq_len: 31                     # max 30 price observations + CLS token
+    output_dim: 128
+
+  # ── Tabular Branch (MLP) ────────────────────────────────────────────────────
+  tabular_encoder:
+    type: MLP
+    input_features:
+      - seller_verified
+      - listing_age_days
+      - img_reverse_match_rate
+      - price_z_score
+      - criteria_met
+      - composite_trust_score
+      - rdap_age_score
+      - dns_health_score
+      - tld_risk_score
+    hidden_dims: [256, 128, 64]
+    dropout: 0.2
+    batch_norm: true
+    activation: GELU
+    output_dim: 64
+
+  # ── Cross-Attention Fusion ───────────────────────────────────────────────────
+  fusion:
+    type: CrossAttention
+    query_dim: 768                      # image features as query
+    key_value_dim: 192                  # price(128) + tabular(64) concatenated
+    num_heads: 8
+    dropout: 0.1
+    projection_dim: 512
+    residual: true
+
+  # ── Classification Head ─────────────────────────────────────────────────────
+  classifier:
+    hidden_dims: [256, 128]
+    dropout: 0.3
+    activation: GELU
+
+training:
+  seed: 42
+  epochs: 80
+  early_stopping_patience: 12
+  batch_size: 24
+  gradient_accumulation_steps: 3       # effective batch = 72
+
+optimizer:
+  type: AdamW
+  # branch-specific learning rates
+  lr_image_encoder: 5.0e-6
+  lr_price_encoder: 1.0e-4
+  lr_tabular_encoder: 1.0e-4
+  lr_fusion: 5.0e-5
+  lr_classifier: 1.0e-4
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+
+scheduler:
+  type: CosineAnnealingWarmRestarts
+  T_0: 20
+  T_mult: 2
+  eta_min: 1.0e-7
+  warmup_epochs: 5
+
+loss:
+  type: FocalLoss
+  gamma: 2.0
+  alpha: 0.6                           # weight for minority (suspicious) class
+  label_smoothing: 0.05
+
+data:
+  # product authenticity + domain trust (joined on product_id)
+  product_train: data/product_authenticity/train.csv
+  product_val:   data/product_authenticity/val.csv
+  product_test:  data/product_authenticity/test.csv
+  domain_csv:    data/domain_trust/domain_scores.csv
+  price_csv:     data/price_history/price_series.csv
+  label_col: authenticity_label
+  product_id_col: product_id
+
+  # Normalisation (computed on train split)
+  normalise_tabular: true
+  normalise_price_series: true
+
+evaluation:
+  metrics: [accuracy, precision, recall, f1, auroc, average_precision]
+  primary_metric: auroc
+  threshold: 0.5                        # can tune on val set
+
+output:
+  checkpoint_dir: checkpoints/vlensnet/
+  log_dir: logs/vlensnet/
+  results_dir: results/
+  save_best: true
+  save_last: true
+  export_onnx: false
+
+hardware:
+  num_workers: 4
+  pin_memory: true
+  fp16: true
+  compile: false                        # torch.compile (set true if torch>=2.0)
+
+logging:
+  wandb: false
+  wandb_project: vlens-trust
+  log_every_n_steps: 50
+  val_every_n_epochs: 1
