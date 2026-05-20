@@ -382,14 +382,14 @@ anomaly_label = 1 if (z_flag and iqr_flag) else 0
 If you use Vlens-Trust in your research, please cite:
 
 ```bibtex
-@article{vairamuthu2026vlenstrust,
-  title     = {Vlens-Trust: A Multimodal Dataset for Product Authenticity and Visual Intelligence},
-  author    = {Vairamuthu, M.},
-  journal   = {Multimedia Tools and Applications},
-  year      = {2026},
-  note      = {MTAP-D-26-01825R1},
-  institution = {Jaya Engineering College, Chennai, India},
-  url       = {https://github.com/vmmuthu31/vlens-dataset}
+@misc{vairamuthu2026vlenstrust,
+  title={Vlens-Trust: A Multimodal Dataset for Product Authenticity and Visual Intelligence},
+  author={Vairamuthu, M.},
+  year={2026},
+  note={Manuscript under review at Multimedia Tools and Applications (MTAP-D-26-01825R1)},
+  publisher={Zenodo},
+  doi={10.5281/zenodo.20311461},
+  url={https://github.com/vmmuthu31/vlens-dataset}
 }
 ```
 
